@@ -19,7 +19,9 @@ Input data format
 The input sequences should be provided using a FASTA format, with the positive and negative phosphorylation (or by extension, any PTM) sites indicated. This can be done by adding a trailing ``#`` to the modified residue for positive annotations, or a ``@`` for negative annotations.
 
 Dummy example for Y phosphorylation, with two positive annotations, four negative annotations, and three Y residues without annotations:
+
 .. code-block::
+
     >dummy_protein
     MKPWETDY#MGPFRKIY@Y@WIVFYESGSDMDCNY#CYNFKGEFITQSICHPNDPSKEGDQARTWCIS
     ETLRSRTTFYDLSIGLTKSFFFNRY@CIWFCFIWLSDDRMTKY@
@@ -28,7 +30,7 @@ When making predictions/visualizing for protein sequences of which no annotation
 
 Configuration file format
 #########################
-.. _config: https://github.com/jasperzuallaert/PhosphoLingo/tree/master/configs
+.. _configs: https://github.com/jasperzuallaert/PhosphoLingo/tree/master/configs
 The architecture and training hyperparameters, dataset locations, and more information is stored in a configuration file, in a ``.json`` format. Example configurations can be found in the configs_ directory. The different options are given below.
 
 ====================== =============== ===
@@ -57,10 +59,13 @@ max_epochs             10              The maximum number of epochs, if no early
 Usage
 *****
 For hints on how to run PhosphoLingo:
+
 .. code-block::
+
     python phospholingo -h
 
 .. code-block::
+
     usage: phospholingo [-h] {train,predict,visualize} ...
 
     positional arguments:
@@ -76,7 +81,9 @@ For hints on how to run PhosphoLingo:
 Train a new model
 #################
 Usage:
+
 .. code-block ::
+
     usage: phospholingo train [-h] json
 
     positional arguments:
@@ -97,7 +104,9 @@ Training can be done via two data setups:
 Predict using an existing model
 ###############################
 Usage:
+
 .. code-block ::
+
     usage: phospholingo predict [-h] model dataset out
 
     positional arguments:
@@ -157,7 +166,7 @@ Giansanti15 Trypsin        ST         TODO
 Giansanti15 multi-protease ST         TODO
 =========== ============== ========== ====
 
-Configuration files (``.json`` format) can be found in config_. These include the final configurations after the hyperparameter searches described in the paper, for all Protein Language Models + setup combinations. If you want to run these preset configurations, you should only change the following parameters: ``training_set``, ``test_set``, ``test_fold``, and ``save_model``
+Configuration files (``.json`` format) can be found in configs_. These include the final configurations after the hyperparameter searches described in the paper, for all Protein Language Models + setup combinations. If you want to run these preset configurations, you should only change the following parameters: ``training_set``, ``test_set``, ``test_fold``, and ``save_model``
 
 Cite
 ****
