@@ -19,7 +19,7 @@ Input data format
 The input sequences should be provided using a FASTA format, with the positive and negative phosphorylation (or by extension, any PTM) sites indicated. This can be done by adding a trailing ``#`` to the modified residue for positive annotations, or a ``@`` for negative annotations.
 
 Dummy example for Y phosphorylation, with two positive annotations, four negative annotations, and three Y residues without annotations:
-.. codeblock::
+.. code-block::
     >dummy_protein
     MKPWETDY#MGPFRKIY@Y@WIVFYESGSDMDCNY#CYNFKGEFITQSICHPNDPSKEGDQARTWCIS
     ETLRSRTTFYDLSIGLTKSFFFNRY@CIWFCFIWLSDDRMTKY@
@@ -28,7 +28,7 @@ When making predictions/visualizing for protein sequences of which no annotation
 
 Configuration file format
 #########################
-.. _config: https://github.com/jasperzuallaert/PhosphoLingo/configs/
+.. _config: https://github.com/jasperzuallaert/PhosphoLingo/tree/master/configs
 The architecture and training hyperparameters, dataset locations, and more information is stored in a configuration file, in a ``.json`` format. Example configurations can be found in the configs_ directory. The different options are given below.
 
 ====================== =============== ===
@@ -57,10 +57,10 @@ max_epochs             10              The maximum number of epochs, if no early
 Usage
 *****
 For hints on how to run PhosphoLingo:
-.. codeblock::
+.. code-block::
     python phospholingo -h
 
-.. codeblock::
+.. code-block::
     usage: phospholingo [-h] {train,predict,visualize} ...
 
     positional arguments:
@@ -76,7 +76,7 @@ For hints on how to run PhosphoLingo:
 Train a new model
 #################
 Usage:
-.. codeblock ::
+.. code-block ::
     usage: phospholingo train [-h] json
 
     positional arguments:
@@ -97,7 +97,7 @@ Training can be done via two data setups:
 Predict using an existing model
 ###############################
 Usage:
-.. codeblock ::
+.. code-block ::
     usage: phospholingo predict [-h] model dataset out
 
     positional arguments:
@@ -119,7 +119,7 @@ UNDER CONSTRUCTION
 
 Setting the maximum system batch size
 *************************************
-.. _utils: https://github.com/jasperzuallaert/phospholingo/utils.py
+.. _utils: https://github.com/jasperzuallaert/PhosphoLingo/blob/master/phospholingo/utils.py
 As Protein Language Models can be very resource-heavy to use, especially when considering the larger models and when also fine-tuning them during training, the user can set their maximum batch size for specific situations. This is done in the ``get_gpu_max_batchsize`` function in utils_. Users can redefine this function so that appropriate batch sizes are returned for their system. A non-optimized example for different batch sizes using different representations is implemented, though this has not been thoroughly optimized.
 
 
