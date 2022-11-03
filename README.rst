@@ -149,22 +149,8 @@ ProtT5-XL-U50 (*full*) ST      TODO
 ProtT5-XL-U50 (*full*) Y       TODO
 ====================== ======= ====
 
-Datasets (FASTA format with ``#`` and ``@`` annotations) used in this study are found at
-
-=========== ============== ========== ====
-Dataset     Protease       Candidates Link
-=========== ============== ========== ====
-Ramasamy22  \-             ST         TODO
-Ramasamy22  \-             Y          TODO
-DeepPSP     \-             ST         TODO
-DeepPSP     \-             Y          TODO
-Giansanti15 AspN           ST         TODO
-Giansanti15 Chymotrypsin   ST         TODO
-Giansanti15 GluC           ST         TODO
-Giansanti15 LysC           ST         TODO
-Giansanti15 Trypsin        ST         TODO
-Giansanti15 multi-protease ST         TODO
-=========== ============== ========== ====
+.. _data: https://github.com/jasperzuallaert/PhosphoLingo/blob/master/data/
+Datasets (FASTA format with ``#`` and ``@`` annotations) used in this study are found in data_.
 
 Configuration files (``.json`` format) can be found in configs_. These include the final configurations after the hyperparameter searches described in the paper, for all Protein Language Models + setup combinations. If you want to run these preset configurations, you should only change the following parameters: ``training_set``, ``test_set``, ``test_fold``, and ``save_model``
 
