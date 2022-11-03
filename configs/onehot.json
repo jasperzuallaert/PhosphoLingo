@@ -1,0 +1,22 @@
+{
+  "representation": "onehot",
+  "freeze_representation": true,
+
+  "receptive_field":194,
+  "conv_depth":2,
+  "conv_width":19,
+  "conv_channels": 325,
+  "final_fc_neurons":363,
+  "dropout":0.45273572000815043,
+  "max_pool_size":1,
+  "batch_norm":false,
+
+  "batch_size":16,
+  "learning_rate":0.00016187874561336232,
+  "pos_weight":1,
+
+  "training_set": "Ramasamy22/ST",
+  "test_set": "default",
+  "test_fold": 0,
+  "save_model": false
+}

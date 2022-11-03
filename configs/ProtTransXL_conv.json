@@ -1,0 +1,22 @@
+{
+  "representation":"ProtTransT5_XL_UniRef50",
+  "freeze_representation": true,
+
+  "receptive_field":185,
+  "conv_depth":3,
+  "conv_width":5,
+  "conv_channels":255,
+  "final_fc_neurons":385,
+  "dropout":0.19,
+  "max_pool_size":1,
+  "batch_norm":false,
+
+  "batch_size":48,
+  "learning_rate":0.000269,
+  "pos_weight":3,
+
+  "training_set": "Ramasamy22/ST",
+  "test_set": "default",
+  "test_fold": 0,
+  "save_model": false
+}

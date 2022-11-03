@@ -1,0 +1,22 @@
+{
+  "representation":"ESM1b",
+  "freeze_representation":true ,
+
+  "receptive_field":103,
+  "conv_depth":4,
+  "conv_width":5,
+  "conv_channels":77,
+  "final_fc_neurons":195,
+  "dropout":0.1882952181071169,
+  "max_pool_size":2,
+  "batch_norm":true,
+
+  "batch_size":36,
+  "learning_rate":0.0034569042936952476,
+  "pos_weight":1,
+
+  "training_set": "Ramasamy22/ST",
+  "test_set": "default",
+  "test_fold": 0,
+  "save_model": false
+}
