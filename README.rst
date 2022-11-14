@@ -127,6 +127,7 @@ Visualize important features using an existing model
 Usage:
 
 .. code-block ::
+
     usage: phospholingo visualize [-h] model dataset out_values out_img
 
     positional arguments:
