@@ -41,6 +41,9 @@ class LightningModule(pl.LightningModule):
 
         model : torch.nn.Module
             The full prediction model
+
+        encoding : nn.Module
+            The one-hot encoding or PLM encoding module in the model architecture
         """
         super().__init__()
         self.lr = config['learning_rate']
@@ -63,6 +66,8 @@ class LightningModule(pl.LightningModule):
         self.metric_names, self.train_metrics = self._init_metrics()
         _, self.valid_metrics = self._init_metrics()
         _, self.test_metrics = self._init_metrics()
+
+        self.encoding = self.model.encoding
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)

@@ -16,6 +16,9 @@ class TokenAlphabet(object):
     post_idx_tokens : list[str]
         The tokens that have indices succeeding the amino acid tokens
 
+    all_tokens : list[str]
+        Combination of pre_idx_tokens, amino_acid_tokens, post_idx_tokens
+
     seq_prepend_tokens : list[str]
         Extra tokens that should be added at the front of a protein sequence
 
@@ -30,6 +33,7 @@ class TokenAlphabet(object):
     pre_idx_tokens = ["<pad>", "<unk>"]
     amino_acid_tokens = list("ACDEFGHIKLMNPQRSTVWY")
     post_idx_tokens = []
+    all_tokens = []
 
     # set which tokens should be added in front/at the back of each encoded sequence
     seq_prepend_tokens = []

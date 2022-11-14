@@ -30,7 +30,8 @@ def main(cl_input: list):
     parser_vis = subparsers.add_parser('visualize', help='calculate SHAP values using an existing model')
     parser_vis.add_argument('model', help='the location of the saved model')
     parser_vis.add_argument('dataset', help='the dataset for which to visualize important features')
-    parser_vis.add_argument('out', help='the output file, will be written in a txt format')
+    parser_vis.add_argument('out_values', help='the output SHAP scores file, will be written in a txt format')
+    parser_vis.add_argument('out_img', help='the normalized average SHAP scores per position, as an image file')
 
     args = parser.parse_args(cl_input)
     if args.prog == 'train':
@@ -38,7 +39,7 @@ def main(cl_input: list):
     elif args.prog == 'predict':
         run_predict(args.model, args.dataset, args.out)
     elif args.prog == 'visualize':
-        run_visualize(args.model, args.dataset, args.out)
+        run_visualize(args.model, args.dataset, args.out_values, args.out_img)
     else:
         raise NotImplementedError()
 

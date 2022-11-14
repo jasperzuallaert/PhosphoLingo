@@ -103,7 +103,7 @@ def get_gpu_max_batchsize(representation: str, freeze_representation: bool):
             return 8
     elif representation == 'ESM1b':
         if freeze_representation:
-            return 16
+            return 8
         else:
             return 4
     else:

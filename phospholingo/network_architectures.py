@@ -227,9 +227,6 @@ class ConvNet(torch.nn.Module):
         x = self.output_block(x)  # out: (num_targets_in_batch, 1)
         return x.squeeze(-1)
 
-    def get_encoding(self):
-        return self.encoding
-
     def get_tokenizer(self):
         return self.tokenizer
 
@@ -269,9 +266,6 @@ class OneHotEncoding(torch.nn.Module):
 
     def get_num_channels(self):
         return self.vocab_size - 1
-
-    def get_pre_embedding_layer(self):
-        return self.embedding_model
 
 
 # If the encoding is set to be one of the protein language models, that model is (down)loaded here, and some extra
@@ -336,12 +330,6 @@ class LanguageModel(torch.nn.Module):
             for param in self.embedding_model.parameters():
                 param.requires_grad = False
 
-        def get_pre_embedding_layer(self):
-            if self.representation == 'ProtTransT5_XL_UniRef50':
-                return self.embedding_model.shared
-            else:
-                return self.embedding_model
-
     def forward(self, x, x_mask, x_mask_no_extra) -> torch.tensor:
         """
         Forward pass of the protein language model. The ``x_mask_no_extra`` takes care of zero'ing out padded tokens,
@@ -385,9 +373,6 @@ class LanguageModel(torch.nn.Module):
 
     def get_num_channels(self) -> int:
         return self.channels
-
-    def get_pre_embedding_layer(self) -> nn.Module:
-        return self.embedding_model.embed_tokens
 
 
 class ConvolutionBlock(torch.nn.Module):

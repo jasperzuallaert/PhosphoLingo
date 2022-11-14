@@ -1,4 +1,6 @@
 import json
+import os.path
+
 import pytorch_lightning as pl
 from datetime import datetime
 
@@ -21,10 +23,8 @@ def run_training(json_file = None):
         filled in. If not all fields are specified, entries in default_config.json will be set as default values.
 
     """
-    json_name = json_file[:-5]
+    json_name = os.path.basename(json_file[:-5])
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
-    experiment_name = f'{timestamp}_{json_name}'
 
     # (1) parse .json config file
     config = json.loads(utils.DEFAULT_JSON)
@@ -39,7 +39,7 @@ def run_training(json_file = None):
         'The receptive field should be large enough to accommodate the specified pooling size'
 
     # (2) Set up logging
-    logger = pl.loggers.CSVLogger(save_dir=f'logs_{experiment_name}')
+    logger = pl.loggers.CSVLogger(save_dir=f'logs', name=json_name, version=timestamp)
     logger.log_hyperparams(config)
 
     # (3) Set the batch size to run on the GPU, as well as the gradient accumulation parameter in case this exceeds
@@ -96,7 +96,7 @@ def run_training(json_file = None):
     # (6) Set up training
     early_stopping = EarlyStopping(monitor='validation_loss',patience=5,mode='min')
     callbacks = [early_stopping]
-    model_dir = 'checkpoints/' if config['save_model'] else None
+    model_dir = 'saved_model/' if config['save_model'] else None
     trainer = pl.Trainer(
         accelerator='gpu',
         devices=1,

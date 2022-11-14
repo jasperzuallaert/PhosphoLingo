@@ -12,6 +12,9 @@ transformers = "^4.23.1"
 fair-esm = "^1.0.3"
 biopython = "^1.79"
 captum = "^0.5.0"
+logomaker = "^0.8"
+pandas = "^1.5.1"
+matplotlib = "^3.6.2"
 
 [tool.poetry.dev-dependencies]
 
