@@ -12,7 +12,7 @@ The PhosphoLingo tool can be called for three different goals:
 
 - training a new model (**train**) and evaluating it on a test set (included)
 - make predictions for new sequences using an existing model (**predict**)
-- (UNDER CONSTRUCTION) visualize important features using an existing model (**visualize**)
+- visualize important features using an existing model (**visualize**)
 
 Input data format
 #################
@@ -124,7 +124,21 @@ Mention data format again
 
 Visualize important features using an existing model
 ####################################################
-UNDER CONSTRUCTION
+Usage:
+
+.. code-block ::
+    usage: phospholingo visualize [-h] model dataset out_values out_img
+
+    positional arguments:
+      model       the location of the saved model
+      dataset     the dataset for which to visualize important features
+      out_values  the output SHAP scores file, will be written in a txt format
+      out_img     the normalized average SHAP scores per position, as an image file
+
+    optional arguments:
+      -h, --help  show this help message and exit
+
+You can make visualizations for a pretrained prediction ``model``, on an unseen ``dataset``. Output values will be stored in ``out_values`` (.txt format), and an image will be generated to ``out_img`` (.jpg, .png, .svg, ...).
 
 Setting the maximum system batch size
 *************************************
@@ -139,14 +153,8 @@ Pre-trained phosphorylation models (``.ckpt`` format) can be downloaded from fol
 ====================== ======= ====
 Model                  Targets Link
 ====================== ======= ====
-ESM-1b (*conv*)        ST      TODO
-ESM-1b (*conv*)        Y       TODO
 ESM-1b (*full*)        ST      TODO
 ESM-1b (*full*)        Y       TODO
-ProtT5-XL-U50 (*conv*) ST      TODO
-ProtT5-XL-U50 (*conv*) Y       TODO
-ProtT5-XL-U50 (*full*) ST      TODO
-ProtT5-XL-U50 (*full*) Y       TODO
 ====================== ======= ====
 
 .. _data: https://github.com/jasperzuallaert/PhosphoLingo/blob/master/data/
