@@ -125,7 +125,6 @@ def visualize_batch(model: torch.nn.Module, interpretable_emb: InterpretableEmbe
     masks_per_target = mask_per_seq.unsqueeze(1).repeat(1, seqlen, 1)[targets_per_seq != -1]
     masks_no_extra_per_target = mask_no_extra_per_seq.unsqueeze(1).repeat(1, seqlen, 1)[targets_per_seq != -1]
     targets_per_target = targets_per_seq[targets_per_seq != -1]
-    print(tokens_per_target.shape)
     pos_in_fragment_per_target = torch.tensor(range(seqlen), dtype=torch.int32).to(model.device).expand((bs, seqlen))[targets_per_seq != -1]
     pos_in_protein_per_target = pos_in_fragment_per_target + offsets_per_target
 
