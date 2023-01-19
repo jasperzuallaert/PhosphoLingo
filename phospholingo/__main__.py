@@ -13,8 +13,9 @@ from train import run_training
 from predict import run_predict
 from visualize import run_visualize
 
-def main(cl_input: list):
+def main():
     """Main function for the CLI"""
+    print(sys.argv[1:])
     parser = argparse.ArgumentParser(prog='phospholingo')
     # parser.add_argument('func', help='the desired PhosphoLingo subprogram to run', required=True, choices=['train', 'predict', 'visualize'])
     subparsers = parser.add_subparsers(help='the desired PhosphoLingo subprogram to run', dest='prog')
@@ -33,7 +34,7 @@ def main(cl_input: list):
     parser_vis.add_argument('out_values', help='the output SHAP scores file, will be written in a txt format')
     parser_vis.add_argument('out_img', help='the normalized average SHAP scores per position, as an image file')
 
-    args = parser.parse_args(cl_input)
+    args = parser.parse_args()
     if args.prog == 'train':
         run_training(args.json)
     elif args.prog == 'predict':
@@ -45,4 +46,4 @@ def main(cl_input: list):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

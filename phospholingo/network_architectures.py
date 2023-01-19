@@ -156,7 +156,7 @@ class ConvNet(torch.nn.Module):
     # The embedding layer is run only once per input sequence, as this can be computationally expensive when working
     # with big transformer models. After the embedding, the convolutional and max pooling layers are processed for each
     # candidate site separately.
-    def forward(self, x, x_mask, x_mask_no_extra, targeted_positions) -> torch.tensor:
+    def forward(self, x, x_mask_per_seq, x_mask_per_seq_no_extra, targeted_positions) -> torch.tensor:
         """
         Forward pass of the full network. When calling this forward function, the targeted positions (= positions for which prediction are to be made) need
          to be specified. Using this information, an output will be generated for each candidate site, using the context
@@ -182,7 +182,7 @@ class ConvNet(torch.nn.Module):
             An all-zero tensor with 1's at the positions for which predictions are to be made
         """
         x = self.encoding(
-            x, x_mask, x_mask_no_extra
+            x, x_mask_per_seq, x_mask_per_seq_no_extra
         )  # out: (batch_size, batch_seqlen, embedding_size)
         padded_x = torch.nn.functional.pad(
             input=x,
@@ -330,7 +330,7 @@ class LanguageModel(torch.nn.Module):
             for param in self.embedding_model.parameters():
                 param.requires_grad = False
 
-    def forward(self, x, x_mask, x_mask_no_extra) -> torch.tensor:
+    def forward(self, x, x_mask_per_seq, x_mask_per_seq_no_extra) -> torch.tensor:
         """
         Forward pass of the protein language model. The ``x_mask_no_extra`` takes care of zero'ing out padded tokens,
         and removes appended/prepended extra, non-amino acid tokens
@@ -356,14 +356,14 @@ class LanguageModel(torch.nn.Module):
                 x, repr_layers=[self.esm_last_layer_idx], return_contacts=False
             )
             rep = results["representations"][self.esm_last_layer_idx]
-            rep = rep * x_mask_no_extra.unsqueeze(-1)
+            rep = rep * x_mask_per_seq_no_extra.unsqueeze(-1)
             rep = rep[:, self.tokenizer.get_num_tokens_added_front() :]
             if self.tokenizer.get_num_tokens_added_back():
                 rep = rep[:, : -self.tokenizer.get_num_tokens_added_back()]
             return rep
         elif self.representation == "ProtTransT5_XL_UniRef50":
-            x = self.embedding_model(input_ids=x, attention_mask=x_mask)
-            rep = x.last_hidden_state * x_mask_no_extra.unsqueeze(-1)
+            x = self.embedding_model(input_ids=x, attention_mask=x_mask_per_seq)
+            rep = x.last_hidden_state * x_mask_per_seq_no_extra.unsqueeze(-1)
             rep = rep[:, self.tokenizer.get_num_tokens_added_front() :]
             if self.tokenizer.get_num_tokens_added_back():
                 rep = rep[:, : -self.tokenizer.get_num_tokens_added_back()]

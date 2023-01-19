@@ -24,7 +24,7 @@ DEFAULT_JSON = '''{
 "batch_size":4,
 "learning_rate":1e-4,
 "pos_weight":1,
-"max_epochs":10
+"max_epochs":15
 }'''
 
 def _precision_at_recall(
