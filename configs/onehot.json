@@ -2,7 +2,7 @@
   "representation": "onehot",
   "freeze_representation": true,
 
-  "receptive_field":194,
+  "receptive_field":195,
   "conv_depth":2,
   "conv_width":19,
   "conv_channels": 325,
