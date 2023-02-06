@@ -14,6 +14,35 @@ from captum.attr import (
     InterpretableEmbeddingBase
 )
 from matplotlib import pyplot as plt
+from torch import nn
+
+class PLM_wrapper_for_visualization(nn.Module):
+    def __init__(self, language_model):
+        super(PLM_wrapper_for_visualization, self).__init__()
+        self.lm = language_model
+        self.num_tokens, self.output_emb_size = self.lm.shared.weight.shape
+        self.device = self.lm.device
+        onehot_encoding = torch.zeros(self.num_tokens, self.num_tokens)
+        for i in range(self.num_tokens):
+            onehot_encoding[i][i] = 1
+        self.onehot_encoder = torch.nn.Embedding.from_pretrained(
+            onehot_encoding, freeze=True
+        )
+        self.new_first_embedding_layer = nn.Linear(self.num_tokens, self.output_emb_size, bias=False)
+        self.new_first_embedding_layer.weight.data = self.lm.shared.weight.data.T
+        self.lm.shared = self.new_first_embedding_layer
+        self.lm.encoder.embed_tokens = self.new_first_embedding_layer
+    def forward(self, input_ids, attention_mask):
+        if input_ids.dtype in (torch.int64, torch.int32):
+            onehot_encoded_inputs = self.onehot_encoder(input_ids)
+        else:
+            onehot_encoded_inputs = input_ids
+        embedded_inputs = self.new_first_embedding_layer(onehot_encoded_inputs)
+        print('############')
+        print(input_ids.shape)
+        print(embedded_inputs.shape)
+        print(attention_mask.shape)
+        return self.lm(inputs_embeds = embedded_inputs, attention_mask = attention_mask)
 
 
 def run_visualize(model_loc: str, dataset_fasta: str, output_txt: str, output_img: str) -> None:
@@ -41,25 +70,32 @@ def run_visualize(model_loc: str, dataset_fasta: str, output_txt: str, output_im
     model = LightningModule(config, tokenizer)
     model.load_state_dict(model_d['state_dict'])
     model.eval()
+
     test_set = ir.SingleFastaDataset(dataset_loc=dataset_fasta, tokenizer=model.tokenizer)
-    gpu_batch_size = utils.get_gpu_max_batchsize(config['representation'], True)
+    gpu_batch_size = 2#utils.get_gpu_max_batchsize(config['representation'], True)
     test_loader = DataLoader(test_set, gpu_batch_size, shuffle=False, pin_memory=True, collate_fn=test_set.collate_fn)
 
-    interpretable_emb = configure_interpretable_embedding_layer(model, 'model.encoding')
+    if config['representation'] == 'onehot':
+        interpretable_emb = configure_interpretable_embedding_layer(model, 'model.encoding')
+        wrapped_language_model = None
+    else:
+        wrapped_language_model = PLM_wrapper_for_visualization(model.model.encoding.embedding_model)
+        model.model.encoding.embedding_model = wrapped_language_model
+        interpretable_emb = configure_interpretable_embedding_layer(model, 'model.encoding.embedding_model.new_first_embedding_layer')
 
     shap = DeepLiftShap(model, multiply_by_inputs=True)
     i=0
     open(output_txt,'w')
     for batch in test_loader:
         i+=1
-        batch_results = visualize_batch(model, interpretable_emb, shap, batch, config['representation'], gpu_batch_size, tokenizer)
+        batch_results = visualize_batch(model, wrapped_language_model, interpretable_emb, shap, batch, config['representation'], gpu_batch_size, tokenizer)
         with open(output_txt, 'a') as write_to:
             for line in batch_results:
                 print(line,file=write_to)
 
     make_average_SHAP_logo(output_img, output_txt)
 
-def visualize_batch(model: torch.nn.Module, interpretable_emb: InterpretableEmbeddingBase, shap: DeepLiftShap, batch: dict[str:torch.tensor], representation:str, gpu_batch_size:int, tokenizer: TokenAlphabet) -> list[str]:
+def visualize_batch(model: torch.nn.Module, wrapped_language_model: PLM_wrapper_for_visualization, interpretable_emb: InterpretableEmbeddingBase, shap: DeepLiftShap, batch: dict[str:torch.tensor], representation:str, gpu_batch_size:int, tokenizer: TokenAlphabet) -> list[str]:
     """
     Generates SHAP values for an individual batch. In contrast to training or predicting, inputs are converted to a per-
      target input, instead of having multiple targets within one input sequence. Therefore, the batch will be split up
@@ -153,16 +189,26 @@ def visualize_batch(model: torch.nn.Module, interpretable_emb: InterpretableEmbe
             print(f'Skipped input of size {mb_tokens_per_target.shape} due to Captum API issue')
             continue
 
-        mb_input_emb = interpretable_emb.indices_to_embeddings(
-            mb_tokens_per_target,
-            mb_masks_per_target,
-            mb_masks_no_extra_per_target
-        )
-
-        mb_forward_output = model(mb_input_emb,
+        if representation == 'onehot':
+            mb_input_emb = interpretable_emb.indices_to_embeddings(
+                mb_tokens_per_target,
+                mb_masks_per_target,
+                mb_masks_no_extra_per_target
+            )
+            mb_forward_output = model(mb_input_emb,
                                None,  # ignored
                                None,  # ignored
                                mb_onehot_encoded_targets)
+        else:
+            # print(tokens_per_target.shape)
+            encoding_per_target = wrapped_language_model.onehot_encoder(mb_tokens_per_target)
+            # print(encoding_per_target.shape)
+            mb_input_emb = interpretable_emb.indices_to_embeddings(encoding_per_target)
+            # import code
+            # code.interact(local=locals())
+            # print(mb_input_emb.shape, mb_masks_per_target.shape,mb_masks_no_extra_per_target.shape,mb_onehot_encoded_targets.shape)
+            mb_forward_output = model(mb_input_emb, mb_masks_per_target, mb_masks_no_extra_per_target, mb_onehot_encoded_targets)
+            # print('a',mb_forward_output.shape)
 
         if representation == 'onehot':
             # if representation is one-hot, an all-zero baseline is used
@@ -173,9 +219,12 @@ def visualize_batch(model: torch.nn.Module, interpretable_emb: InterpretableEmbe
             mb_mask = mb_masks_no_extra_per_target[:, model.tokenizer.get_num_tokens_added_front():]
             mb_masked_mean_per_sequence = torch.sum(mb_input_emb * mb_mask.unsqueeze(-1), dim=1) / mb_seqlens
             mb_baseline = mb_mask.unsqueeze(-1) * mb_masked_mean_per_sequence.unsqueeze(1)
+            # print('b',mb_baseline.shape)
 
         mb_attribution = shap.attribute(inputs=mb_input_emb, additional_forward_args=(mb_masks_per_target, mb_masks_no_extra_per_target, mb_onehot_encoded_targets), baselines=mb_baseline)
         mb_results = torch.sum(mb_attribution, dim=2, keepdim=False)
+
+        # print('c',mb_results.shape)
 
         for idx in range(len(mb_results)):
             fa = model.tokenizer.get_num_tokens_added_front()

@@ -330,7 +330,7 @@ class LanguageModel(torch.nn.Module):
             for param in self.embedding_model.parameters():
                 param.requires_grad = False
 
-    def forward(self, x, x_mask_per_seq, x_mask_per_seq_no_extra) -> torch.tensor:
+    def forward(self, x, x_mask_per_seq=None, x_mask_per_seq_no_extra=None) -> torch.tensor:
         """
         Forward pass of the protein language model. The ``x_mask_no_extra`` takes care of zero'ing out padded tokens,
         and removes appended/prepended extra, non-amino acid tokens
