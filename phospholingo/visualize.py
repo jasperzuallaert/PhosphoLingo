@@ -38,10 +38,6 @@ class PLM_wrapper_for_visualization(nn.Module):
         else:
             onehot_encoded_inputs = input_ids
         embedded_inputs = self.new_first_embedding_layer(onehot_encoded_inputs)
-        print('############')
-        print(input_ids.shape)
-        print(embedded_inputs.shape)
-        print(attention_mask.shape)
         return self.lm(inputs_embeds = embedded_inputs, attention_mask = attention_mask)
 
 
@@ -67,7 +63,7 @@ def run_visualize(model_loc: str, dataset_fasta: str, output_txt: str, output_im
     model_d = torch.load(model_loc)
     config = model_d['hyper_parameters']['config']
     tokenizer = model_d['hyper_parameters']['tokenizer']
-    model = LightningModule(config, tokenizer)
+    model = LightningModule(config, 0, tokenizer)
     model.load_state_dict(model_d['state_dict'])
     model.eval()
 
@@ -85,7 +81,11 @@ def run_visualize(model_loc: str, dataset_fasta: str, output_txt: str, output_im
 
     shap = DeepLiftShap(model, multiply_by_inputs=True)
     i=0
-    open(output_txt,'w')
+    with open(output_txt,'w') as write_to:
+        for k,v in config.items():
+            print(f'# {k}: {v}', file=write_to)
+        print(f'# visualizations_on_dataset: {dataset_fasta}')
+
     for batch in test_loader:
         i+=1
         batch_results = visualize_batch(model, wrapped_language_model, interpretable_emb, shap, batch, config['representation'], gpu_batch_size, tokenizer)
@@ -183,11 +183,21 @@ def visualize_batch(model: torch.nn.Module, wrapped_language_model: PLM_wrapper_
         mb_targets = targets_per_target[fro:to]
         mb_position_per_target = pos_in_protein_per_target[fro:to]
 
-        # A quick fix that occasionally skips a single case, when the mini-batch size of 1 might be found at the end of
-        # a batch. This throws an AssertionError (though it should be supported). To be fixed in a later iteration
         if len(mb_ids_per_target) == 1:
-            print(f'Skipped input of size {mb_tokens_per_target.shape} due to Captum API issue')
-            continue
+            # This is the case if we had a mini-batch size of 1 at the end of the loop - I did this workaround
+            # because Captum would crash otherwise
+            keep_only_one_result = True
+            mb_ids_per_target = mb_ids_per_target * 2
+            mb_offsets_per_target = mb_offsets_per_target.repeat_interleave(2,dim=0)
+            mb_tokens_per_target = mb_tokens_per_target.repeat_interleave(2,dim=0)
+            mb_masks_per_target = mb_masks_per_target.repeat_interleave(2,dim=0)
+            mb_masks_no_extra_per_target = mb_masks_no_extra_per_target.repeat_interleave(2,dim=0)
+            mb_onehot_encoded_targets = mb_onehot_encoded_targets.repeat_interleave(2,dim=0)
+            mb_targets = mb_targets.repeat_interleave(2,dim=0)
+            mb_position_per_target = mb_position_per_target.repeat_interleave(2,dim=0)
+            print(f'Tried my new solution for input of size {mb_tokens_per_target.shape} due to Captum API issue')
+        else:
+            keep_only_one_result = False
 
         if representation == 'onehot':
             mb_input_emb = interpretable_emb.indices_to_embeddings(
@@ -200,15 +210,10 @@ def visualize_batch(model: torch.nn.Module, wrapped_language_model: PLM_wrapper_
                                None,  # ignored
                                mb_onehot_encoded_targets)
         else:
-            # print(tokens_per_target.shape)
             encoding_per_target = wrapped_language_model.onehot_encoder(mb_tokens_per_target)
-            # print(encoding_per_target.shape)
             mb_input_emb = interpretable_emb.indices_to_embeddings(encoding_per_target)
-            # import code
-            # code.interact(local=locals())
             # print(mb_input_emb.shape, mb_masks_per_target.shape,mb_masks_no_extra_per_target.shape,mb_onehot_encoded_targets.shape)
             mb_forward_output = model(mb_input_emb, mb_masks_per_target, mb_masks_no_extra_per_target, mb_onehot_encoded_targets)
-            # print('a',mb_forward_output.shape)
 
         if representation == 'onehot':
             # if representation is one-hot, an all-zero baseline is used
@@ -219,12 +224,10 @@ def visualize_batch(model: torch.nn.Module, wrapped_language_model: PLM_wrapper_
             mb_mask = mb_masks_no_extra_per_target[:, model.tokenizer.get_num_tokens_added_front():]
             mb_masked_mean_per_sequence = torch.sum(mb_input_emb * mb_mask.unsqueeze(-1), dim=1) / mb_seqlens
             mb_baseline = mb_mask.unsqueeze(-1) * mb_masked_mean_per_sequence.unsqueeze(1)
-            # print('b',mb_baseline.shape)
 
         mb_attribution = shap.attribute(inputs=mb_input_emb, additional_forward_args=(mb_masks_per_target, mb_masks_no_extra_per_target, mb_onehot_encoded_targets), baselines=mb_baseline)
         mb_results = torch.sum(mb_attribution, dim=2, keepdim=False)
 
-        # print('c',mb_results.shape)
 
         for idx in range(len(mb_results)):
             fa = model.tokenizer.get_num_tokens_added_front()
@@ -243,6 +246,10 @@ def visualize_batch(model: torch.nn.Module, wrapped_language_model: PLM_wrapper_
                                                                                        x] + '#' + str(int(target))
                             for i, x in enumerate(tokens[:ln])]))
             all_results.append(','.join(f'{s:.3f}' for s in scores1[:ln]))
+            if keep_only_one_result:
+                # this is the case if we had a mini-batch size of 1 at the end of the loop - I did this workaround
+                # because Captum would crash otherwise
+                break
     return all_results
 
 def make_average_SHAP_logo(output_file:str, scores_file:str, fl:int = 10) -> None:
@@ -263,6 +270,10 @@ def make_average_SHAP_logo(output_file:str, scores_file:str, fl:int = 10) -> Non
     records = []
     s = 'ACDEFGHIKLMNPQRSTVWY'
     all_results = open(scores_file).readlines()
+    start_from = 0
+    while all_results[start_from].startswith('#'):
+        start_from+=1
+    all_results = all_results[start_from:]
     for i in range(0, len(all_results), 3):
         records.append([l.strip() for l in all_results[i:i + 3]])
 

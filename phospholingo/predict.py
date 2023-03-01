@@ -22,7 +22,7 @@ def run_predict(model_loc: str, dataset_fasta: str, output_file: str) -> None:
     """
     model_d = torch.load(model_loc)
     config = model_d['hyper_parameters']['config']
-    model = LightningModule(config, model_d['hyper_parameters']['tokenizer'])
+    model = LightningModule(config, 0, model_d['hyper_parameters']['tokenizer'])
     model.load_state_dict(model_d['state_dict'])
     model.eval()
     test_set = ir.SingleFastaDataset(dataset_loc=dataset_fasta, tokenizer=model.tokenizer)

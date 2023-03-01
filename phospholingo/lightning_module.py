@@ -7,10 +7,11 @@ from utils import BinnedPrecisionAtFixedRecall
 from typing import Any
 from input_tokenizers import TokenAlphabet
 import network_architectures
+from torch.optim.lr_scheduler import LinearLR
 
 # PyTorch-Lightning Module class; takes care of training, batch organization, metrics, logging, evaluation
 class LightningModule(pl.LightningModule):
-    def __init__(self, config: dict[str,Any], tokenizer: TokenAlphabet) -> None:
+    def __init__(self, config: dict[str,Any], steps_per_training_epoch: int, tokenizer: TokenAlphabet) -> None:
         """
         Pytorch-Lightning class that takes care of training, batch organization, metrics, logging, and evaluation
 
@@ -50,6 +51,7 @@ class LightningModule(pl.LightningModule):
         self.tokenizer = tokenizer
         self.save_hyperparameters()
         self.model = network_architectures.get_architecture(config=config)
+        self.warm_up_steps = int(config['warm_up_epochs'] * steps_per_training_epoch)
 
         # set loss functions for training/validation/test
         self.train_cross_entropy_loss = torch.nn.BCEWithLogitsLoss(
@@ -74,7 +76,19 @@ class LightningModule(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = AdamW(self.parameters(), lr=self.lr)
-        return optimizer
+        scheduler = LinearLR(
+            optimizer,
+            start_factor=0.0,
+            end_factor=1.0,
+            total_iters=self.warm_up_steps
+        )
+        scheduler = {
+            'scheduler': scheduler,
+            'name': 'actual_learning_rate',
+            'interval': 'step',
+            'frequency': 1
+        }
+        return [optimizer], [scheduler]
 
     def _init_metrics(self) -> tuple[list[str], nn.ModuleList]:
         """
@@ -271,3 +285,4 @@ class LightningModule(pl.LightningModule):
                 result[0] if isinstance(result, tuple) else result,
             )
             metric.reset()
+

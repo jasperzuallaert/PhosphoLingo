@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 from datetime import datetime
 
 from lightning_module import LightningModule
-from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 import input_reader as ir
 import utils
 from torch.utils.data.dataloader import DataLoader
@@ -90,12 +90,14 @@ def run_training(json_file = None):
 
     # (5) Model initialization. Create network architecture, construct pytorch lightning module
     lightning_module = LightningModule(config=config,
+                                       steps_per_training_epoch=len(train_loader),
                                        tokenizer=tokenizer
     )
 
     # (6) Set up training
     early_stopping = EarlyStopping(monitor='validation_loss',patience=5,mode='min')
-    callbacks = [early_stopping]
+    lr_monitor = LearningRateMonitor(logging_interval='step')
+    callbacks = [early_stopping, lr_monitor]
     model_dir = 'saved_model/' if config['save_model'] else None
     trainer = pl.Trainer(
         accelerator='gpu',

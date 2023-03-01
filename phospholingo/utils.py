@@ -23,6 +23,7 @@ DEFAULT_JSON = '''{
 
 "batch_size":4,
 "learning_rate":1e-4,
+"warm_up_epochs":1.5,
 "pos_weight":1,
 "max_epochs":15
 }'''
