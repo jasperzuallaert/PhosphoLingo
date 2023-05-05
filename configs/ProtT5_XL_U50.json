@@ -12,7 +12,7 @@
  "max_pool_size": 2,
  "pos_weight": 1,
  "receptive_field": 195,
- "representation": "onehot",
+ "representation": "ProtTransT5_XL_UniRef50",
  "test_fold": -1,
  "test_set": "default",
  "training_set": "Scop3P/ST/PF",
