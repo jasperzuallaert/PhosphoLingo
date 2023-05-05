@@ -165,6 +165,8 @@ Datasets (FASTA format with ``#`` and ``@`` annotations) used in this study are 
 
 Configuration files (``.json`` format) can be found in configs_. If you want to run the preset configurations, you should only change the following parameters: ``training_set``, ``test_set``, ``test_fold``, and ``save_model``.
 
+Prediction files for SwissProt (version 11/2022) are found in predictions_.
+
 Cite
 ****
 UNDER CONSTRUCTION
