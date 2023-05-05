@@ -17,7 +17,6 @@ def main():
     """Main function for the CLI"""
     print(sys.argv[1:])
     parser = argparse.ArgumentParser(prog='phospholingo')
-    # parser.add_argument('func', help='the desired PhosphoLingo subprogram to run', required=True, choices=['train', 'predict', 'visualize'])
     subparsers = parser.add_subparsers(help='the desired PhosphoLingo subprogram to run', dest='prog')
 
     parser_train = subparsers.add_parser('train', help='train a new prediction model')

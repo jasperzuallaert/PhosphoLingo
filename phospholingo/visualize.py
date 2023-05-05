@@ -18,6 +18,12 @@ from torch import nn
 
 class PLM_wrapper_for_visualization(nn.Module):
     def __init__(self, language_model):
+        """
+        This is a wrapper class to be able to run DeepLiftSHAP from the Captum package on the PLM-based models. It
+        first pushes the input through a one-hot encoded input layer, after which this encoding is then used to fetch
+        the first-layer representation of the language model. When implemented like this, it allows to run DeepLiftSHAP
+        on the one-hot encoded amino acid composition, instead of the tokens (which does not work).
+        """
         super(PLM_wrapper_for_visualization, self).__init__()
         self.lm = language_model
         self.num_tokens, self.output_emb_size = self.lm.shared.weight.shape
@@ -32,6 +38,7 @@ class PLM_wrapper_for_visualization(nn.Module):
         self.new_first_embedding_layer.weight.data = self.lm.shared.weight.data.T
         self.lm.shared = self.new_first_embedding_layer
         self.lm.encoder.embed_tokens = self.new_first_embedding_layer
+
     def forward(self, input_ids, attention_mask):
         if input_ids.dtype in (torch.int64, torch.int32):
             onehot_encoded_inputs = self.onehot_encoder(input_ids)
@@ -68,7 +75,7 @@ def run_visualize(model_loc: str, dataset_fasta: str, output_txt: str, output_im
     model.eval()
 
     test_set = ir.SingleFastaDataset(dataset_loc=dataset_fasta, tokenizer=model.tokenizer)
-    gpu_batch_size = 2#utils.get_gpu_max_batchsize(config['representation'], True)
+    gpu_batch_size = utils.get_gpu_max_batchsize(config['representation'], True)
     test_loader = DataLoader(test_set, gpu_batch_size, shuffle=False, pin_memory=True, collate_fn=test_set.collate_fn)
 
     if config['representation'] == 'onehot':
@@ -195,7 +202,6 @@ def visualize_batch(model: torch.nn.Module, wrapped_language_model: PLM_wrapper_
             mb_onehot_encoded_targets = mb_onehot_encoded_targets.repeat_interleave(2,dim=0)
             mb_targets = mb_targets.repeat_interleave(2,dim=0)
             mb_position_per_target = mb_position_per_target.repeat_interleave(2,dim=0)
-            print(f'Tried my new solution for input of size {mb_tokens_per_target.shape} due to Captum API issue')
         else:
             keep_only_one_result = False
 
@@ -212,7 +218,6 @@ def visualize_batch(model: torch.nn.Module, wrapped_language_model: PLM_wrapper_
         else:
             encoding_per_target = wrapped_language_model.onehot_encoder(mb_tokens_per_target)
             mb_input_emb = interpretable_emb.indices_to_embeddings(encoding_per_target)
-            # print(mb_input_emb.shape, mb_masks_per_target.shape,mb_masks_no_extra_per_target.shape,mb_onehot_encoded_targets.shape)
             mb_forward_output = model(mb_input_emb, mb_masks_per_target, mb_masks_no_extra_per_target, mb_onehot_encoded_targets)
 
         if representation == 'onehot':
@@ -289,7 +294,7 @@ def make_average_SHAP_logo(output_file:str, scores_file:str, fl:int = 10) -> Non
         scores = [float(x) * norm_coeff for x in rec[2].rstrip().split(',')]
 
         for pos in range(len(seq)):
-            if '#' in seq[pos]: #denoted as for instance "T#1" or "S#0"
+            if '#' in seq[pos]: # denoted as for instance "T#1" or "S#0"
                 for j in range(fl * 2 + 1):
                     if 0 <= pos - fl + j < len(seq):
                         aa = seq[pos - fl + j][:1]  # cut off #0 and #1

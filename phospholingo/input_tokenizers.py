@@ -123,7 +123,7 @@ class ESMAlphabet(TokenAlphabet):
 
     def __init__(self):
         """
-        Tokenizer for a the ESM language models (https://github.com/facebookresearch/esm/)
+        Tokenizer for the ESM language models (https://github.com/facebookresearch/esm/)
         """
         # this block is from the ESM code
         self.all_tokens = list(self.prepend_tokens)
@@ -135,7 +135,7 @@ class ESMAlphabet(TokenAlphabet):
         self.tok_to_idx = {tok: i for i, tok in enumerate(self.all_tokens)}
 
 
-class ProtTransT5XL_UniRef50(TokenAlphabet):
+class ProtTransAnkhAlphabet(TokenAlphabet):
     prepend_tokens = ("<pad>", "<sep>", "<unk>")
     standard_tokens = list("ALGVSREDTIPKFQNYMHWCXBOUZ")
     append_tokens = ()
@@ -144,17 +144,51 @@ class ProtTransT5XL_UniRef50(TokenAlphabet):
 
     def __init__(self):
         """
-        Tokenizer for a the ProtTrans language models (https://github.com/agemagician/ProtTrans)
+        Tokenizer for the ProtTrans and Ankh language models (https://github.com/agemagician/ProtTrans, https://github.com/agemagician/Ankh)
         """
         self.all_tokens = list(self.prepend_tokens)
         self.all_tokens.extend(self.standard_tokens)
         self.all_tokens.extend(self.append_tokens)
         self.tok_to_idx = {tok: i for i, tok in enumerate(self.all_tokens)}
 
+class CARPAlphabet(TokenAlphabet):
+    prepend_tokens = ()
+    standard_tokens = list('ACDEFGHIKLMNPQRSTVWYBZXJOU*')#-#@
+    append_tokens = ('<pad>', '<unk>', '<mask>')
+    seq_prepend_tokens = []
+    seq_append_tokens = []
+
+    def __init__(self):
+        """
+        Tokenizer for the CARP language model (https://github.com/microsoft/protein-sequence-models)
+        """
+        self.all_tokens = list(self.prepend_tokens)
+        self.all_tokens.extend(self.standard_tokens)
+        self.all_tokens.extend(self.append_tokens)
+        self.tok_to_idx = {tok: i for i, tok in enumerate(self.all_tokens)}
+        self.set_indices()
+        self.tok_to_idx['?'] = self.unk_idx
+
+    def set_indices(self):
+        self.unk_idx = self.tok_to_idx["<unk>"] if '<unk>' in self.tok_to_idx else None
+        self.padding_idx = self.tok_to_idx["<pad>"] if '<pad>' in self.tok_to_idx else None
+        self.cls_idx = self.tok_to_idx["<cls>"] if '<cls>' in self.tok_to_idx else None
+        self.mask_idx = self.tok_to_idx["<mask>"] if '<mask>' in self.tok_to_idx else None
+        self.eos_idx = self.tok_to_idx["<eos>"] if '<eos>' in self.tok_to_idx else None
+        self.sep_idx = self.tok_to_idx["<sep>"] if '<sep>' in self.tok_to_idx else None
+
 
 tokenizers = {
-    "onehot": OneHotAlphabet,
-    "ESM1_small": ESMAlphabet,
-    "ESM1b": ESMAlphabet,
-    "ProtTransT5_XL_UniRef50": ProtTransT5XL_UniRef50,
+  'onehot': OneHotAlphabet,
+  'ESM1_small': ESMAlphabet,
+  'ESM1b': ESMAlphabet,
+  'ESM-1b': ESMAlphabet,
+  'ESM2_150M': ESMAlphabet,
+  'ESM2_650M': ESMAlphabet,
+  'ESM2_3B': ESMAlphabet,
+  'ESM2_15B': ESMAlphabet,
+  'CARP_640M': CARPAlphabet,
+  'ProtTransT5_XL_UniRef50': ProtTransAnkhAlphabet,
+  'Ankh_base': ProtTransAnkhAlphabet,
+  'Ankh_large': ProtTransAnkhAlphabet
 }

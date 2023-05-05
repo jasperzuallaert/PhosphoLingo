@@ -4,7 +4,7 @@ PhosphoLingo
 
 Introduction
 ############
-PhosphoLingo is an advanced phosphorylation predictor using deep learning and Protein Language Models. It predictors likely phosphorylation sites from sequence alone. Given the used data format, it can easily be extended to other post-translational modifications (PTMs).
+PhosphoLingo is an advanced phosphorylation predictor using deep learning and Protein Language Models. It predicts likely phosphorylation sites from sequence alone. Given the used data format, it can easily be extended to other post-translational modifications (PTMs).
 
 Supported functionality
 ***********************
@@ -33,28 +33,30 @@ Configuration file format
 .. _configs: https://github.com/jasperzuallaert/PhosphoLingo/tree/master/configs
 The architecture and training hyperparameters, dataset locations, and more information is stored in a configuration file, in a ``.json`` format. Example configurations can be found in the configs_ directory. The different options are given below.
 
-====================== =============== ===
+====================== ========================== ===
 name                   default value
-====================== =============== ===
-training_set           "Ramasamy22/ST" The location of FASTA files to train, validate and test (default) or to train and validate (if ``test_set != "default"``)
-test_set               "default"       "default" if regular training/validation/test scheme is followed, otherwise the location of the ``fold[0-9].fasta`` files for evaluation
-test_fold              0               Only used if ``test_set != "default"``. Chooses the ``fold[0-9].fasta`` file to use for evaluation.
-save_model             False           If True, the model will be kept after training.
-representation         "ESM1_small"    The representation to use. Supported: ``onehot``, ``ESM1_small``, ``ESM1b``, ``ProtTransT5_XL_UniRef50``
-freeze_representation  True            Whether to freeze the representation during training (*conv* setup) or fine-tune it (*full* setup)
-receptive_field        65              The number of residues (centered around the candidate P-site) that are given to the CNN
-conv_depth             3               The number of convolutional blocks in the architecture
-conv_width             9               The filter size of the convolutional layers
-conv_channels          200             The number of output channels (= number of filters) per convolutional layer
-final_fc_neurons       64              The number of neurons in the final fully connected layer
-dropout                0.2             Only used if ``batch_norm == False``. Dropout *p* for all dropout layers
-max_pool_size          1               The pooling size used in the pooling layers
-batch_norm             False           Chooses whether to use batch normalization as regularization (if ``True``), or dropout (if ``False``)
-batch_size             4               The number of protein fragments in each batch
-learning_rate          1e-4            Learning rate for AdamW
-pos_weight             1               The weight for positive samples in the loss calculation
-max_epochs             10              The maximum number of epochs, if no early stopping occurs
-====================== =============== ===
+====================== ========================== ===
+training_set           "Scop3P/ST/PF"             The location of FASTA files to train, validate and test (default) or to train and validate (if ``test_set != "default"``)
+test_set               "default"                  "default" if regular training/validation/test scheme is followed, otherwise the location of the ``fold[0-9].fasta`` files for evaluation
+test_fold              0                          Only used if ``test_set != "default"``. Chooses the ``fold[0-9].fasta`` file to use for evaluation.
+save_model             False                      If True, the model will be kept after training.
+representation         "ProtTransT5_XL_UniRef50"  The representation to use. Supported: ``onehot``, ``ESM1_small``, ``ESM1b``, ``ESM2_150M``, ``ESM2_650M``, ``ESM2_3B``, ``CARP_640M``, ``ProtTransT5_XL_UniRef50``, ``Ankh_base``, ``Ankh_large``
+freeze_representation  True                       Whether to freeze the representation during training or fine-tune it. All models in the paper are trained with this parameter set to ``True``
+receptive_field        65                         The number of residues (centered around the candidate P-site) that are given to the CNN
+conv_depth             3                          The number of convolutional blocks in the architecture
+conv_width             9                          The filter size of the convolutional layers
+conv_channels          200                        The number of output channels (= number of filters) per convolutional layer
+final_fc_neurons       64                         The number of neurons in the final fully connected layer
+dropout                0.2                        Only used if ``batch_norm == False``. Dropout *p* for all dropout layers
+max_pool_size          1                          The pooling size used in the pooling layers
+batch_norm             False                      Chooses whether to use batch normalization as regularization (if ``True``), or dropout (if ``False``)
+batch_size             4                          The number of protein fragments in each batch
+warm_up_epochs         1.5                        The number of epochs for learning rate warm-up (linear from 0.1*LR)
+learning_rate          1e-4                       Learning rate for AdamW
+
+pos_weight             1                          The weight for positive samples in the loss calculation
+max_epochs             10                         The maximum number of epochs, if no early stopping occurs
+====================== ========================== ===
 
 Usage
 *****
@@ -149,19 +151,19 @@ As Protein Language Models can be very resource-heavy to use, especially when co
 
 Extra files
 ***********
-Pre-trained phosphorylation models (``.ckpt`` format) can be downloaded from following locations. The models are trained on the combination of all annotations of datasets considered in the paper.
+Pre-trained phosphorylation models (``.ckpt`` format) can be downloaded from following locations. The models are trained on the Scop3P-ST-PF and Scop3P-Y-PF datasets.
 
 ====================== ======= ====
 Model                  Targets Link
 ====================== ======= ====
-ESM-1b (*full*)        ST      TODO
-ESM-1b (*full*)        Y       TODO
+ProtT5-XL-U50           ST      TODO
+ProtT5-XL-U50           Y       TODO
 ====================== ======= ====
 
 .. _data: https://github.com/jasperzuallaert/PhosphoLingo/blob/master/data/
 Datasets (FASTA format with ``#`` and ``@`` annotations) used in this study are found in data_.
 
-Configuration files (``.json`` format) can be found in configs_. These include the final configurations after the hyperparameter searches described in the paper, for all Protein Language Models + setup combinations. If you want to run these preset configurations, you should only change the following parameters: ``training_set``, ``test_set``, ``test_fold``, and ``save_model``
+Configuration files (``.json`` format) can be found in configs_. If you want to run the preset configurations, you should only change the following parameters: ``training_set``, ``test_set``, ``test_fold``, and ``save_model``.
 
 Cite
 ****

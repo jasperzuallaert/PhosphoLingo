@@ -78,10 +78,11 @@ class LightningModule(pl.LightningModule):
         optimizer = AdamW(self.parameters(), lr=self.lr)
         scheduler = LinearLR(
             optimizer,
-            start_factor=0.0,
+            start_factor=0.1,
             end_factor=1.0,
             total_iters=self.warm_up_steps
         )
+        print(self.warm_up_steps)
         scheduler = {
             'scheduler': scheduler,
             'name': 'actual_learning_rate',

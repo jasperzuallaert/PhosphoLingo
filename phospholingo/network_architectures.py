@@ -4,6 +4,8 @@ from typing import Any
 from input_tokenizers import TokenAlphabet, tokenizers
 from torch import nn
 from transformers import T5EncoderModel
+from sequence_models.pretrained import load_model_and_alphabet
+import ankh
 
 
 def get_architecture(config: dict[str, Any]) -> torch.nn.Module:
@@ -315,11 +317,36 @@ class LanguageModel(torch.nn.Module):
             self.embedding_model, _ = esm.pretrained.esm1_t6_43M_UR50S()
             self.channels = 768
             self.esm_last_layer_idx = 6
+        elif representation == 'ESM2_150M':
+            self.embedding_model, _ = esm.pretrained.esm2_t30_150M_UR50D()
+            self.channels = 640
+            self.esm_last_layer_idx = 30
+        elif representation == 'ESM2_650M':
+            self.embedding_model, _ = esm.pretrained.esm2_t33_650M_UR50D()
+            self.channels = 1280
+            self.esm_last_layer_idx = 33
+        elif representation == 'ESM2_3B':
+            self.embedding_model, _ = esm.pretrained.esm2_t36_3B_UR50D()
+            self.channels = 2560
+            self.esm_last_layer_idx = 36
+        elif representation == 'ESM2_15B':
+            self.embedding_model, _ = esm.pretrained.esm2_t48_15B_UR50D()
+            self.channels = 5120
+            self.esm_last_layer_idx = 48
+        elif representation == 'CARP_640M':
+            self.embedding_model, _ = load_model_and_alphabet('carp_640M')
+            self.channels = 1280
         elif representation == "ProtTransT5_XL_UniRef50":
             self.embedding_model = T5EncoderModel.from_pretrained(
                 "Rostlab/prot_t5_xl_uniref50"
             )
             self.channels = 1024
+        elif representation == 'Ankh_base':
+            self.embedding_model, _ = ankh.load_base_model()
+            self.channels = 768
+        elif representation == 'Ankh_large':
+            self.embedding_model, _ = ankh.load_large_model()
+            self.channels = 1536
         else:
             raise NotImplementedError(
                 f'"{representation}" not supported as embedding type'

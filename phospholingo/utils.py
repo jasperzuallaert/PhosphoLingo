@@ -4,12 +4,12 @@ from torch import Tensor
 import torch
 
 DEFAULT_JSON = '''{
-"training_set": "Ramasamy22/ST",
+"training_set": "Scop3P/ST/PF",
 "test_set": "default",
 "test_fold": 0,
 "save_model": false,
 
-"representation":"ESM1_small",
+"representation":"ProtTransT5_XL_UniRef50",
 "freeze_representation": true,
 
 "receptive_field": 65,
@@ -95,17 +95,5 @@ def get_gpu_max_batchsize(representation: str, freeze_representation: bool):
     freeze_representation : bool
         If True, the language model weights will not be fine-tuned, and thus less GPU memory is needed
     """
-    if representation == 'onehot':
-        return 64
-    elif representation == 'ESM1_small':
-        if freeze_representation:
-            return 64
-        else:
-            return 8
-    elif representation == 'ESM1b':
-        if freeze_representation:
-            return 8
-        else:
-            return 4
-    else:
-        return 4
+    # just a fixed size, change this function at will
+    return 16
