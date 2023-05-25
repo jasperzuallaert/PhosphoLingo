@@ -153,19 +153,20 @@ Extra files
 ***********
 Pre-trained phosphorylation models (``.ckpt`` format) can be downloaded from following locations. The models are trained on the Scop3P-ST-PF and Scop3P-Y-PF datasets.
 
-====================== ======= ====
+====================== ======= =========
 Model                  Targets Link
-====================== ======= ====
-ProtT5-XL-U50           ST      TODO
-ProtT5-XL-U50           Y       TODO
-====================== ======= ====
+====================== ======= =========
+ProtT5-XL-U50           ST     https://huggingface.co/JasperZ/PhosphoLingo_ST/resolve/main/PhosphoLingo_ST.ckpt
+ProtT5-XL-U50           Y      https://huggingface.co/JasperZ/PhosphoLingo_Y/resolve/main/PhosphoLingo_Y.ckpt
+====================== ======= =========
 
 .. _data: https://github.com/jasperzuallaert/PhosphoLingo/blob/master/data/
+.. _predictions: https://github.com/jasperzuallaert/PhosphoLingo/blob/master/predictions/
 Datasets (FASTA format with ``#`` and ``@`` annotations) used in this study are found in data_.
 
 Configuration files (``.json`` format) can be found in configs_. If you want to run the preset configurations, you should only change the following parameters: ``training_set``, ``test_set``, ``test_fold``, and ``save_model``.
 
-Prediction files for SwissProt (version 11/2022) are found in predictions_.
+Prediction files for the human proteome as found in SwissProt (version 11/2022) are found in predictions_.
 
 Cite
 ****
