@@ -397,7 +397,7 @@ class LanguageModel(torch.nn.Module):
             return rep
         elif self.representation in ('Ankh_base','Ankh_large'):
             x = self.embedding_model(input_ids=x).last_hidden_state
-            rep = x * x_mask_no_extra.unsqueeze(-1)
+            rep = x * x_mask_per_seq_no_extra.unsqueeze(-1)
             rep = rep[:,self.tokenizer.get_num_tokens_added_front():]
             if self.tokenizer.get_num_tokens_added_back():
                 rep = rep[:,:-self.tokenizer.get_num_tokens_added_back()]
