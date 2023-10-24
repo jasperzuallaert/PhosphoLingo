@@ -17,6 +17,7 @@ pandas = "^1.5.1"
 matplotlib = "^3.6.2"
 ankh = "^1.0.0"
 sequence-models = "^1.6.0"
+torchmetrics = "0.10.3"
 
 [tool.poetry.dev-dependencies]
 
