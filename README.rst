@@ -156,8 +156,8 @@ Pre-trained phosphorylation models (``.ckpt`` format) can be downloaded from fol
 ====================== ======= =========
 Model                  Targets Link
 ====================== ======= =========
-ProtT5-XL-U50           ST     https://huggingface.co/JasperZ/PhosphoLingo_ST/resolve/main/PhosphoLingo_ST.ckpt
-ProtT5-XL-U50           Y      https://huggingface.co/JasperZ/PhosphoLingo_Y/resolve/main/PhosphoLingo_Y.ckpt
+ProtT5-XL-U50           ST     https://huggingface.co/JasperZ/PhosphoLingo_ST/resolve/main/PhosphoLingo_ST_new.ckpt
+ProtT5-XL-U50           Y      https://huggingface.co/JasperZ/PhosphoLingo_Y/resolve/main/PhosphoLingo_Y_new.ckpt
 ====================== ======= =========
 
 .. _data: https://github.com/jasperzuallaert/PhosphoLingo/blob/master/data/
