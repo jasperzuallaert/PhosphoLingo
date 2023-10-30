@@ -11,7 +11,8 @@ import argparse
 import sys
 from train import run_training
 from predict import run_predict
-from visualize import run_visualize
+from visualize_shuffling import run_visualize
+
 
 def main():
     """Main function for the CLI"""

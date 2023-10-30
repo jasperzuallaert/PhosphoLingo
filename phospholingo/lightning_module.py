@@ -157,10 +157,10 @@ class LightningModule(pl.LightningModule):
         """
         # read outputs of 'collate_fn'
         prot_ids_per_seq = batch["prot_id"]
-        tokens_per_seq = batch["prot_token_ids"]
-        offsets_per_seq = batch["prot_offsets"]
-        mask_per_seq = batch["prot_input_mask"]
-        mask_no_extra_per_seq = batch["prot_input_mask_without_added_tokens"]
+        tokens_per_seq = batch["prot_token_ids"].to(self.device)
+        offsets_per_seq = batch["prot_offsets"].to(self.device)
+        mask_per_seq = batch["prot_input_mask"].to(self.device)
+        mask_no_extra_per_seq = batch["prot_input_mask_without_added_tokens"].to(self.device)
         targets_per_seq = batch["targets"]
 
         # target_mask_per_seq serves as a mask for showing the positions to select for classification (i.e. the

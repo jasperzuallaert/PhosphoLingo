@@ -1,3 +1,6 @@
+#poetry run python phospholingo visualize logs/vis_mar23_jan23_Ramasamy22_non_peptide_filtered_ST_onehot/20230303_154805/checkpoints/epoch\=5-step\=6893.ckpt data/jan23/jan23_Giansanti15_peptide_filtered_multiprotease/test.fasta shuffling_onehot_tmp.txt shuffling_onehot_tmp.svg
+import time
+from datetime import datetime
 import math
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -16,6 +19,7 @@ from captum.attr import (
 from matplotlib import pyplot as plt
 import pickle
 from torch import nn
+
 
 class PLM_wrapper_for_visualization(nn.Module):
     def __init__(self, language_model):
@@ -68,6 +72,9 @@ def run_visualize(model_loc: str, dataset_fasta: str, output_txt: str, output_im
     output_img : str
         The output image file to which a visualization of normalized average scores will be saved
     """
+
+    NUM_SHUFFLES = 30
+    print(f'Running with {NUM_SHUFFLES} shuffles')
     model_d = torch.load(model_loc)
     config = model_d['hyper_parameters']['config']
     tokenizer = model_d['hyper_parameters']['tokenizer']
@@ -89,28 +96,28 @@ def run_visualize(model_loc: str, dataset_fasta: str, output_txt: str, output_im
         interpretable_emb = configure_interpretable_embedding_layer(model, 'model.encoding.embedding_model.new_first_embedding_layer')
 
     shap = DeepLiftShap(model, multiply_by_inputs=True)
-    i=0
     with open(output_txt,'w') as write_to:
         for k,v in config.items():
             print(f'# {k}: {v}', file=write_to)
         print(f'# visualizations_on_dataset: {dataset_fasta}')
 
-    for batch in test_loader:
+    for i,batch in enumerate(test_loader):
+        print(f'{datetime.now().strftime("%m/%d/%Y, %H:%M:%S")} # Starting batch {i} of {len(test_loader)}')
         i+=1
-        batch_results = visualize_batch(i, model, wrapped_language_model, interpretable_emb, shap, batch, config['representation'], gpu_batch_size, tokenizer)
+        batch_results = visualize_batch(NUM_SHUFFLES, i, model, wrapped_language_model, interpretable_emb, shap, batch, config['representation'], gpu_batch_size, tokenizer)
         with open(output_txt, 'a') as write_to:
             for line in batch_results:
                 print(line,file=write_to)
 
         ########
-        print('IF YOU SEE THIS YOU SHOULD REMOVE SOME DEBUGGIN CODE')
-        if i == 10:
-            break
+        # print('IF YOU SEE THIS YOU SHOULD REMOVE SOME DEBUGGIN CODE')
+        # if i == 2:
+        #     break
         ########
 
     make_average_SHAP_logo(output_img, output_txt)
 
-def visualize_batch(batchnum, model: torch.nn.Module, wrapped_language_model: PLM_wrapper_for_visualization, interpretable_emb: InterpretableEmbeddingBase, shap: DeepLiftShap, batch: dict[str:torch.tensor], representation:str, gpu_batch_size:int, tokenizer: TokenAlphabet) -> list[str]:
+def visualize_batch(NUM_SHUFFLES, batchnum, model: torch.nn.Module, wrapped_language_model: PLM_wrapper_for_visualization, interpretable_emb: InterpretableEmbeddingBase, shap: DeepLiftShap, batch: dict[str:torch.tensor], representation:str, gpu_batch_size:int, tokenizer: TokenAlphabet) -> list[str]:
     """
     Generates SHAP values for an individual batch. In contrast to training or predicting, inputs are converted to a per-
      target input, instead of having multiple targets within one input sequence. Therefore, the batch will be split up
@@ -229,40 +236,36 @@ def visualize_batch(batchnum, model: torch.nn.Module, wrapped_language_model: PL
             mb_input_emb = interpretable_emb.indices_to_embeddings(encoding_per_target)
             mb_forward_output = model(mb_input_emb.to(model.device), mb_masks_per_target.to(model.device), mb_masks_no_extra_per_target.to(model.device), mb_onehot_encoded_targets.to(model.device))
 
-        if representation == 'onehot':
-            # if representation is one-hot, an all-zero baseline is used
-            mb_baseline = torch.zeros_like(mb_input_emb).to(model.device)
-        else:
-            avgref = False
-            # if language model, construct the baseline for each protein fragment as the average embedding for that fragment
-            if avgref:
-                mb_seqlens = torch.sum(mb_masks_no_extra_per_target, dim=-1, keepdim=True)  # (bs, 1) -> with lengths
-                mb_mask = mb_masks_no_extra_per_target[:, model.tokenizer.get_num_tokens_added_front():]
-                mb_masked_mean_per_sequence = torch.sum(mb_input_emb * mb_mask.unsqueeze(-1), dim=1) / mb_seqlens
-                mb_baseline = mb_mask.unsqueeze(-1) * mb_masked_mean_per_sequence.unsqueeze(1)
-            else:
-                mb_baseline = torch.zeros_like(mb_input_emb).to(model.device)
-
-        mb_attribution = shap.attribute(inputs=mb_input_emb, additional_forward_args=(mb_masks_per_target, mb_masks_no_extra_per_target, mb_onehot_encoded_targets), baselines=mb_baseline)
-        mb_results = torch.sum(mb_attribution, dim=2, keepdim=False)
-
-
+        all_res = []
+        # mb_baseline = mb_input_emb.clone().to(model.device)
+        import time
+        for shuffle_num in range(NUM_SHUFFLES):
+            t1 = time.time()
+            idx = torch.randperm(mb_input_emb.size(1))
+            mb_baseline = mb_input_emb.clone().to(model.device)
+            mb_baseline = mb_baseline[:, idx]
+            # print(idx.shape,mb_baseline.shape)
+            t2 = time.time()
+            mb_attribution = shap.attribute(inputs=mb_input_emb, additional_forward_args=(mb_masks_per_target, mb_masks_no_extra_per_target, mb_onehot_encoded_targets), baselines=mb_baseline)
+            t3 = time.time()
+            mb_results = torch.sum(mb_attribution, dim=2, keepdim=False)
+            # print(f"Shuffle {shuffle_num} took {t3-t1} seconds, of which {t2-t1} seconds were spent on shuffling and {t3-t2} seconds on attribution.")
+            all_res.append(mb_results)
+        avg_results = torch.mean(torch.stack(all_res).transpose(2,0).transpose(1,0), dim=2)
         ##################
-        mb_d = {
-            'mb_ids_per_target': mb_ids_per_target,
-            'mb_offsets_per_target': mb_offsets_per_target.detach().cpu().numpy(),
-            'mb_position_per_target': mb_position_per_target.detach().cpu().numpy(),
-            'mb_targets': mb_targets.detach().cpu().numpy(),
-            'mb_tokens_per_target': mb_tokens_per_target.detach().cpu().numpy(),
-            'mb_baseline': mb_baseline.detach().cpu().numpy(),
-            'mb_input_emb': mb_input_emb.detach().cpu().numpy(),
-            'mb_attribution': mb_attribution.detach().cpu().numpy(),
-            'mb_results': mb_results.detach().cpu().numpy(),
-        }
-        l.append(mb_d)
+        # mb_d = {
+        #     'mb_ids_per_target': mb_ids_per_target,
+        #     'mb_offsets_per_target': mb_offsets_per_target.detach().cpu().numpy(),
+        #     'mb_position_per_target': mb_position_per_target.detach().cpu().numpy(),
+        #     'mb_targets': mb_targets.detach().cpu().numpy(),
+        #     'mb_tokens_per_target': mb_tokens_per_target.detach().cpu().numpy(),
+        #     'mb_input_emb': mb_input_emb.detach().cpu().numpy(),
+        #     'avg_results': avg_results.detach().cpu().numpy(),
+        # }
+        # l.append(mb_d)
         ##################
 
-        for idx in range(len(mb_results)):
+        for idx in range(len(avg_results)):
             fa = model.tokenizer.get_num_tokens_added_front()
             prot_id = mb_ids_per_target[idx]
             mask = mb_masks_per_target[idx][fa:]
@@ -273,7 +276,7 @@ def visualize_batch(batchnum, model: torch.nn.Module, wrapped_language_model: PL
             position_in_chunk = position_in_seq - offset
             pred = torch.sigmoid(mb_forward_output[idx])
             target = mb_targets[idx]
-            scores1 = mb_results[idx]
+            scores1 = avg_results[idx]
             all_results.append(f'>{prot_id},{pred:.3f},{target},pos={position_in_chunk},actual_pos={position_in_seq}')
             all_results.append(','.join([tokenizer.all_tokens[x] if i != position_in_chunk else tokenizer.all_tokens[
                                                                                        x] + '#' + str(int(target))
@@ -283,7 +286,7 @@ def visualize_batch(batchnum, model: torch.nn.Module, wrapped_language_model: PL
                 # this is the case if we had a mini-batch size of 1 at the end of the loop - I did this workaround
                 # because Captum would crash otherwise
                 break
-    pickle.dump(l, open(f'onehot_testing_{batchnum}.pkl', 'wb'))
+    # pickle.dump(l, open(f'shuffling_prottrans_testing_{batchnum}_numshuf{NUM_SHUFFLES}.pkl', 'wb'))
     return all_results
 
 def make_average_SHAP_logo(output_file:str, scores_file:str, fl:int = 10) -> None:
